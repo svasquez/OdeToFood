@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,45 +19,35 @@ namespace OdeToFood
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<ISaludo, Saludo>();
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ISaludo saludo , ILogger<Startup> logger)
         {
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseDeveloperExceptionPage();
-            //}
-
-            app.Use(next => 
+            if (env.IsDevelopment())
             {
-                return async context =>
-                {
-                    logger.LogInformation("Request Incoming!!");
-                    if(context.Request.Path.StartsWithSegments("/mym"))
-                    {
-                        await context.Response.WriteAsync("Activo");
-                        logger.LogInformation("Request Handled");
-                    }
+                app.UseDeveloperExceptionPage();
+            }
 
-                    else
-                    {
-                        await next(context);
-                        logger.LogInformation("Response Outgoing");
-                    }
-                };
-            });
+            app.UseStaticFiles();
 
-            app.UseWelcomePage(new WelcomePageOptions
-            {
-                Path = "/wpage"
-            });
+            app.UseMvc(ConfigureRoutes);
 
             app.Run(async (context) =>
             {
                 var msj = saludo.GetMessageOfDay();
-                await context.Response.WriteAsync(msj);
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync($"Not found");
             });
+        }
+
+        private void ConfigureRoutes(IRouteBuilder routeBuilder)
+        {
+            //Home/Index
+
+            routeBuilder.MapRoute("PorDefecto",
+                "{controller=Home}/{action=Index}/{id?}");
         }
     }
 }
